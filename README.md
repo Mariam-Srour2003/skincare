@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Skincare Tracker
 
-## Getting Started
+Full-stack skincare routine tracking application built with Next.js, TypeScript, Prisma, and MySQL.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Authentication (register/login/logout) with hashed passwords and secure httpOnly session cookie
+- Product management (CRUD, image upload, category/time-of-use, active/inactive, search/filter)
+- Routine management (morning/night, weekday-specific or default fallback routines)
+- Ordered routine steps with drag-and-drop reordering
+- Daily tracking with persistent completion state and date-specific detail view
+- Dashboard with morning/night checklist, completion progress, weekly summary, and streak
+- Calendar/history view and CSV export
+- Dark mode
+
+## Tech Stack
+
+- Next.js App Router + TypeScript
+- Tailwind CSS
+- Prisma ORM
+- MySQL
+- Zod validation
+- React Hook Form
+- dnd-kit (drag and drop)
+- Sonner toasts
+
+## Project Structure
+
+```text
+prisma/
+	schema.prisma
+	seed.ts
+	migrations/
+src/
+	app/
+		(auth)/
+		(app)/
+		api/
+	components/
+	lib/
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment Variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Copy `.env.example` to `.env` and configure:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+DATABASE_URL="mysql://root:password@localhost:3306/skincare_tracker"
+JWT_SECRET="replace-with-long-random-secret"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
 
-## Learn More
+## Local Setup
 
-To learn more about Next.js, take a look at the following resources:
+1. Ensure MySQL is running and your `.env` is set.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. Run these commands in terminal from project root (same sequence used during setup):
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm install
+npm run prisma:generate
+npm run prisma:migrate -- --name init
+npm run prisma:seed
+npm run build
+npm run dev
+```
 
-## Deploy on Vercel
+3. Open http://localhost:3000
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Demo account created by seed:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Email: demo@skincare.local
+- Password: demo1234
+
+## Scripts
+
+- `npm run dev` - run local dev server
+- `npm run build` - production build
+- `npm run start` - run built app
+- `npm run lint` - run ESLint
+- `npm run prisma:generate` - generate Prisma client
+- `npm run prisma:migrate` - run Prisma migration in dev
+- `npm run prisma:seed` - seed demo data
+
+## API Overview
+
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+- `GET/POST /api/products`
+- `GET/PATCH/DELETE /api/products/:id`
+- `GET/POST /api/routines`
+- `GET/PATCH/DELETE /api/routines/:id`
+- `POST /api/routines/:id/items/reorder`
+- `GET/PATCH /api/daily/:date`
+- `POST /api/daily/:date/toggle`
+- `GET /api/dashboard`
+- `POST /api/upload`
+- `GET /api/export/history`
+
+## Notes
+
+- Uploaded product images are stored in `public/uploads` and image path is stored in the database.
+- Old daily logs remain immutable snapshots even if routines change later.
+- Build and lint checks pass locally.

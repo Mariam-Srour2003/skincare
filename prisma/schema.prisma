@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProductCategory {
+  CLEANSER
+  SERUM
+  MOISTURIZER
+  SUNSCREEN
+  TREATMENT
+  TONER
+  OTHER
+}
+
+enum TimeOfUse {
+  MORNING
+  NIGHT
+  BOTH
+}
+
+enum RoutinePeriod {
+  MORNING
+  NIGHT
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  products      Product[]
+  routines      Routine[]
+  dailyLogs     DailyLog[]
+  routineShares Routine[]  @relation("RoutineCreatedBy")
+}
+
+model Product {
+  id         String          @id @default(cuid())
+  userId     String
+  name       String
+  brand      String
+  category   ProductCategory
+  timeOfUse  TimeOfUse
+  notes      String?         @db.Text
+  imageUrl   String?
+  isActive   Boolean         @default(true)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routineItems  RoutineItem[]
+  dailyLogItems DailyLogItem[]
+
+  @@index([userId])
+  @@index([category])
+  @@index([isActive])
+}
+
+model Routine {
+  id          String        @id @default(cuid())
+  userId      String
+  name        String
+  period      RoutinePeriod
+  isDefault   Boolean       @default(false)
+  archivedAt  DateTime?
+  createdById String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdBy    User?         @relation("RoutineCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  items        RoutineItem[]
+  days         RoutineDay[]
+
+  @@index([userId])
+  @@index([period])
+  @@index([archivedAt])
+}
+
+model RoutineDay {
+  id         String     @id @default(cuid())
+  routineId   String
+  dayOfWeek   DayOfWeek
+
+  routine    Routine    @relation(fields: [routineId], references: [id], onDelete: Cascade)
+
+  @@unique([routineId, dayOfWeek])
+  @@index([dayOfWeek])
+}
+
+model RoutineItem {
+  id           String   @id @default(cuid())
+  routineId    String
+  productId    String
+  displayOrder Int
+  instructions String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  routine      Routine  @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([routineId, displayOrder])
+  @@index([productId])
+}
+
+model DailyLog {
+  id          String        @id @default(cuid())
+  userId      String
+  date        DateTime
+  dayOfWeek   DayOfWeek
+  note        String?       @db.Text
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       DailyLogItem[]
+
+  @@unique([userId, date])
+  @@index([date])
+}
+
+model DailyLogItem {
+  id              String        @id @default(cuid())
+  dailyLogId      String
+  productId       String
+  routinePeriod   RoutinePeriod
+  routineName     String
+  plannedOrder    Int
+  plannedNote     String?
+  completed       Boolean       @default(false)
+  completedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  dailyLog        DailyLog      @relation(fields: [dailyLogId], references: [id], onDelete: Cascade)
+  product         Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([dailyLogId, productId, routinePeriod])
+  @@index([dailyLogId])
+  @@index([productId])
+}
